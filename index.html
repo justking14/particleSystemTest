@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html>
+<body>
+        <div id="timer_div"></div>
+<canvas id="myCanvas" width="400" height="400" style="border:1px solid #d3d3d3;"></canvas>
+<body onmousedown="return mouseD(event);">
+<body onmouseup="return mouseU(event);">
+        <body onkeydown="return userControl(event);">
+                <script>
+//<body onmousemove="return mouseDownEvent(event);"> 
+
+
+var userControl = function(event){
+    var keycode;
+    
+    if (window.event) {
+       //alert('ie');
+        keycode = event.keyCode;
+    } else if (event.which) {
+        //alert('firefox ');
+        keycode = event.which;
+    }
+    onTitle = false
+        
+    if([32, 37, 38, 39, 40].indexOf(keycode) > -1) {
+        event.preventDefault();
+    }
+    console.log(keycode, String.fromCharCode(keycode))
+    var key = String.fromCharCode(keycode)
+
+    if(key === "S"){
+        playerYvel -= 1
+        currentDirectionUD = direction.down
+    }else if(key === "W"){
+        playerYvel += 1
+        currentDirectionUD = direction.up
+    }else if(key === "A"){
+        playerXvel += 1
+        currentDirectionLR = direction.left
+    }else if(key === "D"){
+        playerXvel -= 1
+        currentDirectionLR = direction.right
+    }
+
+}
+var direction = {
+		up : 1, 
+		down: 2, 
+		left : 3,
+		right: 4,        
+    }; 
+var currentDirectionUD = direction.down
+var currentDirectionLR = direction.left
+
+
+var playerXpos = 8
+var playerYpos = 8
+var playerXvel = 0
+var playerYvel = 0
+
+var particles = []
+var stillParticles = []
+
+function getRandomColor() {
+  var letters = '0123456789ABCDEF';
+  var color = '#';
+  for (var i = 0; i < 6; i++) {
+    color += letters[Math.floor(Math.random() * 16)];
+  }
+  return color;
+}
+function mouseD(event){
+    console.log("D")
+    clicking = true
+}
+function mouseU(event){
+    console.log("U")
+    clicking = false
+}
+
+
+
+var myVar = setInterval(f, 90);
+var myVar2 = setInterval(checkCondition, 1000);//once a second
+var myVar3 = setInterval(createParticles, 30)
+var myVar4 = setInterval(makeBomb, 7500)
+
+var seconds_left = 1
+
+var interval = setInterval(function() {
+    document.getElementById('timer_div').innerHTML = ++seconds_left;
+
+    if (seconds_left <= 0)
+    {
+        
+        document.getElementById('timer_div').innerHTML = 'You are ready';
+        clearInterval(interval);
+    }
+}, 1000);
+
+function makeBomb(){
+
+    lastMakerMade = Date.now()
+    var done = false
+    var x = Math.floor(Math.random() * 400) 
+    var y = Math.floor(Math.random() * 400) 
+
+    while(done === false){
+
+        var a = x - playerXpos;
+        var b = y - playerYpos;
+
+        var c = Math.sqrt( a*a + b*b );
+        if(c > 50){
+            done = true
+        }else{
+            x = Math.floor(Math.random() * 400) 
+            y = Math.floor(Math.random() * 400) 
+        }
+
+    }
+    var np = new ParticleMaker(x,y)
+    lastMakerTime = Date.now()
+    makers.push(np)
+}
+
+
+var centerX = 0
+var centerY = 0
+var clicking = false
+var lastMakerMade = Date.now()
+
+
+/*
+function mouseDownEvent(event){
+    var x = event.screenX   
+    var y = event.screenY  
+        
+    centerX = x
+    centerY = y - 50
+    
+    if(clicking === true){
+       
+        if(Date.now() - lastMakerMade > 1){
+            for (var j = 0; j < squares.length; j++){
+                if(x >= squares[j].x && x <= squares[j].x + squares[j].w && centerY >= squares[j].y && centerY <= squares[j].y + squares[j].h ){
+                    lastMakerMade = Date.now()
+                    var np = new ParticleMaker(centerX,centerY)
+
+                    lastMakerX = centerX
+                    lastMakerY = centerY
+                    lastMakerTime = Date.now()
+                    makers.push(np)
+                }
+            }
+        }
+    }
+}
+*/
+
+
+//radial all directions
+//splatter in direction of last maker made, or last several 
+function Item(x, y, w,h,lw) {
+    this.x = x;
+    this.y = y;
+    this.w = w;
+	this.h = h;
+	this.start = Date.now();
+	this.color = getRandomColor();
+	this.inColor = getRandomColor();
+	this.lineWidth = lw;
+}
+var myItems = [
+];
+
+function Square(x, y,w,h) {
+    this.x = x;
+    this.y = y;
+    this.w = w ;
+	this.h = h;
+}
+var squares = [new Square(100,100,300,100), new Square(200,300,200,20)];
+
+function ParticleMaker(x, y) {
+    this.x = x;
+    this.y = y;
+    this.start = Date.now();
+    this.lastX = lastMakerX
+    this.lastY = lastMakerY
+    this.lastMakerTime = lastMakerTime
+
+}
+
+function Particle(x, y, w,h, xType, makersStart, xVel, yVel) {
+    this.shake = false
+    this.goingBlack = true
+    this.colorCountdown = 1
+    this.xType = xType;
+    this.x = x;
+    this.y = y;
+    this.w = Math.floor(Math.random() * 10) ;
+	this.h = Math.floor(Math.random() * 10) ;
+	this.start = Date.now();
+	this.color = "rgb(155, 102, 102)"; //getRandomColor();
+    this.inColor = "rgb(155, 102, 102)"; //getRandomColor();
+    this.red = 255
+    this.green = 0
+    this.blue = 0
+    this.xVel = xVel// Math.floor(Math.random() * 10000) - 4000;
+
+    this.yVel = yVel//Math.floor(Math.random() * 10000) - 4000;///Math.floor(Math.random() * 10) - 4;
+    this.isDead = false
+    this.makersStart = makersStart
+}
+function stillParticle(x,y){
+    this.x = x
+    this.y = y
+}
+
+var lastMakerX = 0
+var lastMakerY = 0
+var lastMakerTime = Date.now()
+
+var makers = []
+
+
+
+var startX = 0;
+var goingUp = true
+
+var audio = new Audio('deathscream.mp3');
+
+function createParticles(){
+    for (var j = 0; j < makers.length; j++){
+        var xVel = 0
+        var yVel = 0
+        if(Math.abs(makers[j].start - makers[j].lastMakerTime) < 10){
+            if(Math.abs(makers[j].lastX - makers[j].x) > 5){
+                if(makers[j].lastX < makers[j].x){
+                    xVel = Math.floor(Math.random() * 50000);
+                }else{
+                    xVel = -1 *  Math.floor(Math.random() * 50000);
+                }
+            }
+            if(Math.abs(makers[j].lastY - makers[j].y) > 5){
+                if(makers[j].lastY > makers[j].y){
+                    yVel = -1 * Math.floor(Math.random() * 50000);
+                }else{
+                    yVel =  Math.floor(Math.random() * 50000);
+                }
+            }
+        }
+        if(yVel === 0){
+         //   xVel = 0
+        }
+        if(xVel === 0){
+           // yVel = 0
+        }                    
+        xVel =  Math.floor(Math.random() * 2500) - 1250;
+        yVel =  Math.floor(Math.random() * 2500) - 1250;
+
+        var timeElapsed = Date.now() - makers[j].start
+        var timeRnd = Math.floor(Math.random()*1000)
+       // console.log(timeRnd, timeElapsed)
+        if(timeRnd > timeElapsed || timeRnd > 100){
+            var np = new Particle(makers[j].x,makers[j].y,1,1,  Math.floor(Math.random() * 6) , makers[j].start, xVel, yVel)
+            particles.push(np)
+        }
+    }
+}
+
+function checkCondition(){
+    //console.log("Number of makers is ", makers.length)
+    //console.log("Number of particles is ",particles.length )
+    var sp = new stillParticle(playerXpos, playerYpos)
+    stillParticles.push(sp)
+}
+
+playerCount = 0
+function reset(){
+    currentDirectionUD = direction.down
+     currentDirectionLR = direction.left
+
+     seconds_left = 1
+
+     playerXpos = 8
+     playerYpos = 8
+     playerXvel = 0
+     playerYvel = 0
+
+    particles = []
+    makers = []
+    squares = []
+    stillParticles = []
+
+}
+
+function f(){
+   
+
+	var x = Math.floor(Math.random() * 300);
+	var y = Math.floor(Math.random() * 300);
+	var w = Math.floor(Math.random() * 100);
+	var h = Math.floor(Math.random() * 100);
+	var lw = Math.floor(Math.random() * 25);
+
+	//myItems.push(new Item(x,y,w,h,lw))
+
+	var c = document.getElementById("myCanvas");
+	var ctx = c.getContext("2d");
+	ctx.fillStyle = "red";
+    ctx.clearRect(0, 0, 400, 400);
+
+  playerXpos-=playerXvel
+    playerYpos-=playerYvel
+    var img = new Image();
+    first = "D"
+    second = "L"
+    playerCount+=1
+    if(playerCount > 3){
+        playerCount = 1
+    }
+    if(currentDirectionUD === direction.up){
+        first = "U"
+    }
+    if(currentDirectionLR === direction.right){
+        second = "R"
+    }
+    img.src  = first + second + playerCount + ".png"
+    ctx.drawImage(img,playerXpos,playerYpos);
+
+    for (var j = 0; j < stillParticles.length; j++){
+            ctx.strokeStyle = "rgb(255,255,255)";      /// particles[j].color;
+			ctx.fillStyle =  "rgb(255,255,255)";  //particles[j].inColor;
+			ctx.lineWidth = 5;
+			ctx.rect(stillParticles[j].x ,stillParticles[j].y,5,5);
+			ctx.stroke();
+			ctx.fill();
+    }
+
+
+  
+    ctx.drawImage(img,playerXpos,playerYpos);
+    if(playerXpos < -100 || playerXpos > 500 || playerYpos < -100 || playerYpos > 500){
+        reset()
+    }
+    
+    //ctx.rect(centerX - 50/2,centerY - 50/2,50,50);
+   // ctx.stroke();  
+   ctx.drawImage(img,playerXpos,playerYpos);
+
+    for (var j = 0; j < makers.length; j++){
+        ctx.fillStyle = "red"
+        ctx.rect(makers[j].x - 5,makers[j].y - 5,10,10);
+        ctx.stroke();  
+    }
+
+
+    var ct = 0
+    for (var j = 0; j < particles.length - ct; j++){
+        if(particles[j].isDead === true){
+            particles.splice(j, 1);
+            ct+=1;
+        }
+    }
+   
+    for (var j = 0; j < particles.length; j++){
+        
+        if(particles[j] != undefined){
+        RectALeft = particles[j].x
+        RectARight = particles[j].x + particles[j].w
+
+        RectATop = particles[j].y + particles[j].h
+        RectABottom = particles[j].y
+
+        RectBLeft = playerXpos
+        RectBRight = playerXpos + 8
+
+        RectBTop = playerYpos + 8
+        RectBBottom = playerYpos
+
+
+        if (RectALeft < RectBRight && RectARight > RectBLeft &&
+     RectATop > RectBBottom && RectABottom < RectBTop ){
+            console.log("HIT")
+            audio.play()
+            reset()
+     }
+     
+            ctx.beginPath();
+
+            var nmb = Math.floor(Math.random() * 3)-1
+            var nmb2 = Math.floor(Math.random() * 3) -1 
+           // if(particles[j].shake === false){
+            //    nmb = 0
+              //  nmb2 = 0
+            //}
+            particles[j].xVel = particles[j].xVel * 0.999
+            particles[j].yVel = particles[j].yVel * 0.999
+
+
+            particles[j].y = particles[j].y + particles[j].yVel/((particles[j].start - particles[j].makersStart) * 0.5) + nmb
+            particles[j].x = particles[j].x + particles[j].xVel/((particles[j].start - particles[j].makersStart) * 0.5) + nmb2
+            
+            
+            if(particles[j].goingBlack){
+                particles[j].red   = particles[j].red    - particles[j].colorCountdown
+                particles[j].green = particles[j].green  - particles[j].colorCountdown
+                particles[j].blue  = particles[j].blue   - particles[j].colorCountdown
+            }else{
+                particles[j].red   = particles[j].red    + particles[j].colorCountdown
+                particles[j].green = particles[j].green  + particles[j].colorCountdown
+                particles[j].blue  = particles[j].blue   + particles[j].colorCountdown
+            }
+
+            if(particles[j].red < -50){
+                particles[j].isDead = true
+            }
+
+
+			ctx.strokeStyle = "rgb(" + particles[j].red + "," + particles[j].blue + "," + particles[j].green + ")";      /// particles[j].color;
+			ctx.fillStyle =  "rgb(" + particles[j].red + "," + particles[j].blue + "," + particles[j].green + ")";  //particles[j].inColor;
+			ctx.lineWidth = particles[j].lineWidth;
+			ctx.rect(particles[j].x ,particles[j].y,particles[j].w ,particles[j].h);
+			ctx.stroke();
+            ctx.fill();
+        }
+    }
+
+
+	for (var j = 0; j < myItems.length; j++){
+		if(Date.now() - myItems[j].start >= 3000){
+		}else{
+
+			//ctx.beginPath();
+			//ctx.strokeStyle = myItems[j].color;
+			//ctx.fillStyle = myItems[j].inColor;
+			//ctx.lineWidth = myItems[j].lineWidth;
+			//ctx.rect(myItems[j].x + startX,myItems[j].y,myItems[j].w + startX,myItems[j].h);
+			//ctx.stroke();
+			//ctx.fill();
+		}
+    }
+    ctx.drawImage(img,playerXpos,playerYpos);
+
+}
+
+</script>
+
+</body>
+</html>
